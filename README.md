@@ -1,5 +1,3 @@
-Certainly! Here's a comprehensive `README.md` file tailored for the [Movie](https://github.com/Shubhamjaiswal54/Movie) project by Shubham Jaiswal. This README provides an overview of the project, setup instructions, and other pertinent details to assist users and contributors.
-
 ---
 
 # 🎬 Movie App
