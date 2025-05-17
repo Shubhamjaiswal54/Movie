@@ -1,5 +1,3 @@
----
-
 # 🎬 Movie App
 
 A simple and responsive movie listing web application built with **React** and **Vite**, utilizing **Appwrite** as the backend. This project showcases modern web development practices, including efficient build tools and backend integration.
