@@ -6,7 +6,7 @@ import { useDebounce } from 'react-use';
 import updateSearchCount, { getTrendingMovies } from './appwrite';
 
 
-
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +19,7 @@ function App() {
     () => {
       setDeboucer(searchTerm);
     },
-    500,
+    1000,
     [searchTerm]
   );
 
@@ -32,17 +32,22 @@ function App() {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3NGQ5NTA0ZDYwMTNkOTk3MzFmOWVmZmIwMTA1MTg2NCIsIm5iZiI6MTc0NzQwNTA1NS43OTYsInN1YiI6IjY4Mjc0OGZmNzUyYWJiYmJmODVhNDIyZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.FseH6B_d0kbxdHVXCUcFJrbi-F7eRx9fN-nXoTaE5AQ'
+        Authorization: `Bearer ${API_KEY}`
       }
     };
 
     try {
       const response = await fetch(url, options);
-      const result = await response.json(); // <-- correct here
-      console.log(result); // Inspect to find correct path to movie list
-      setMovies(result.results || []); // Adjust path as needed
-      if (query && result.length > 0) {
-        await updateSearchCount(query, result.results[0]);
+      const data = await response.json(); // <-- correct here
+
+
+      setMovies(data.results || []); // Adjust path as needed
+
+      if (query && data.results.length > 0) {
+        console.log("here is the list of found movies");
+        console.log(query);
+        console.log(data.results[0]);
+        await updateSearchCount(query, data.results[0]);
       }
 
     } catch (error) {
@@ -55,8 +60,8 @@ function App() {
 
   async function loadTrendingMOvies() {
     try {
-      const movies = await getTrendingMovies();
-      setTrendingMovies(movies);
+      const total = await getTrendingMovies();
+      setTrendingMovies(total);
     } catch (error) {
       console.log(error);
 
@@ -85,20 +90,22 @@ function App() {
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
 
+
         {trendingMovies.length > 0 && (
           <section className='trending'>
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
-                <li key={movie.id}>
+                <li key={movie.$id}>
                   <p>{index + 1}</p>
-                  <img src={movie.poster_url} alt={movie.title} />
+                  <img src={movie.posterUrl} alt={movie.title} />
                 </li>
               ))
               }
             </ul>
           </section>
         )}
+
 
 
         <section className='all-movies m-20'>

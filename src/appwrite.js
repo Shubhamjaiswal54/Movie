@@ -1,23 +1,26 @@
 /* eslint-disable no-unused-vars */
-import { Client, Databases, ID, Query } from "appwrite";
+import { Client, Databases, ID, Permission, Query, Role } from "appwrite";
 
 // Environment variables - fixed based on the URL in the error message
-const DATABASE_ID = '68278c08001b8fc846c5';  // This matches the first ID in the error URL
-const COLLECTION_ID = '68278c530038de60eb11'; // This matches the second ID in the error URL
-const PROJECT_ID = '68278b56000a7b6f03e2';
+const DATABASE_ID = import.meta.env.VITE_DATABASE_ID; // This matches the first ID in the error URL
+const COLLECTION_ID = import.meta.env.VITE_COLLECTION_ID; // This matches the second ID in the error URL
+const PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 
 // Debug log to verify the IDs
 console.log("Using database configuration:", {
   DATABASE_ID,
   COLLECTION_ID,
-  PROJECT_ID
+  PROJECT_ID,
 });
 
-const client = new Client()
-  .setEndpoint("https://fra.cloud.appwrite.io/v1")
-  .setProject(PROJECT_ID);
+const client = new Client();
+client.setEndpoint("https://fra.cloud.appwrite.io/v1");
+client.setProject(PROJECT_ID); // Make sure this executes
 
-const database = new Databases(client); 
+// Add debugging to verify the client configuration
+console.log("Client initialized with project ID:", PROJECT_ID);
+
+const database = new Databases(client);
 
 async function updateSearchCount(searchTerm, movie) {
   try {
@@ -25,18 +28,27 @@ async function updateSearchCount(searchTerm, movie) {
       Query.equal("searchTerm", searchTerm),
     ]);
 
+    //count is incresing in the database it's working fine
     if (result.documents.length > 0) {
       const doc = result.documents[0];
-      await database.updateDocument(DATABASE_ID, COLLECTION_ID, doc.$id, {
-        count: doc.count + 1,
-      });
-    } else {
+      console.log(doc);
+      await database.updateDocument(
+        DATABASE_ID,
+        COLLECTION_ID,
+        doc.$id,
+        {
+          count: doc.count + 1,
+        },
+        [Permission.update(Role.any())]
+      );
+
+    } else {      
       await database.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
-        searchTerm,
+        searchTerm :searchTerm,
         count: 1,
         movie_id: movie.id,
-        poster_url: `https://image.tmdb.org/t/p/w500/${movie.poster_path}`,
-      });
+        posterUrl: `https://image.tmdb.org/t/p/w500/${movie.poster_path}`,
+      },[Permission.write(Role.any())]);
     }
   } catch (error) {
     console.error("Error updating search count:", error);
@@ -44,16 +56,17 @@ async function updateSearchCount(searchTerm, movie) {
 }
 
 async function getTrendingMovies() {
-    try {
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
-            Query.limit(5),
-            Query.orderDesc("count"),
-        ]);
-        return result.documents;
-    } catch (error) {
-        console.error("Error fetching trending movies:", error);
-        return [];
-    }
+  try {
+    const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      Query.limit(5),
+    ]);
+    console.log("here are the results");
+    console.log(result.documents);
+    return result.documents;
+  } catch (error) {
+    console.error("Error fetching trending movies:", error);
+    return [];
+  }
 }
 
 export default updateSearchCount;
